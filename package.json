@@ -1,0 +1,24 @@
+{
+  "name": "acadchain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AcadChain: Rede Descentralizada para Autenticação de Diplomas e Carteirinha Estudantil Digital",
+  "author": "AcadChain Research Team",
+  "license": "MIT",
+  "workspaces": [
+    "backend",
+    "client"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=backend & npm run dev --workspace=client",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=backend && npm run build --workspace=client",
+    "build:backend": "npm run build --workspace=backend",
+    "build:client": "npm run build --workspace=client",
+    "test": "npm run test --workspace=backend",
+    "db:init": "node scripts/init-db.mjs",
+    "db:seed": "node scripts/seed-db.mjs",
+    "db:reset": "node scripts/reset-db.mjs"
+  }
+}
