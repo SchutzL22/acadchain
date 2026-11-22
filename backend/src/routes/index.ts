@@ -4,6 +4,7 @@ import instituicoesRoutes from './instituicoes.routes.js';
 import estudantesRoutes from './estudantes.routes.js';
 import blockchainRoutes from './blockchain.routes.js';
 import credenciaisRoutes from './credenciais.routes.js';
+import documentosRoutes from './documentos.routes.js';
 
 const apiRouter = Router();
 
@@ -12,5 +13,6 @@ apiRouter.use('/instituicoes', instituicoesRoutes);
 apiRouter.use('/estudantes', estudantesRoutes);
 apiRouter.use('/blockchain', blockchainRoutes);
 apiRouter.use('/credenciais', credenciaisRoutes);
+apiRouter.use('/documentos', documentosRoutes);
 
 export default apiRouter;

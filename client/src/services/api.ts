@@ -5,9 +5,43 @@ import {
   BlockchainStatus,
   TransacaoBlockchain,
   ApiResponse,
+  CarteirinhaData,
+  VerificacaoPdfResult,
 } from '../types';
 
 const API_BASE_URL = 'http://localhost:3001/api';
+
+export function getPdfDownloadUrl(idOrUuid: string, download = true): string {
+  return `${API_BASE_URL}/documentos/${encodeURIComponent(idOrUuid)}/pdf${download ? '?download=true' : ''}`;
+}
+
+export function getPdfPreviewUrl(idOrUuid: string): string {
+  return `${API_BASE_URL}/documentos/${encodeURIComponent(idOrUuid)}/pdf`;
+}
+
+export function getPdfAdulteradoUrl(idOrUuid: string): string {
+  return `${API_BASE_URL}/documentos/${encodeURIComponent(idOrUuid)}/adulterar-demonstracao`;
+}
+
+export async function fetchCarteirinhaData(idOrUuid: string): Promise<CarteirinhaData> {
+  const res = await fetch(`${API_BASE_URL}/documentos/${encodeURIComponent(idOrUuid)}/carteirinha`);
+  if (!res.ok) throw new Error(`Carteirinha não encontrada: ${res.statusText}`);
+  const json = await res.json();
+  return json.carteirinha;
+}
+
+export async function verificarPdf(file: File): Promise<VerificacaoPdfResult> {
+  const formData = new FormData();
+  formData.append('arquivo', file);
+
+  const res = await fetch(`${API_BASE_URL}/documentos/verificar-pdf`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json = await res.json();
+  return json;
+}
 
 export async function checkBackendHealth(): Promise<any> {
   const res = await fetch(`${API_BASE_URL}/health`);

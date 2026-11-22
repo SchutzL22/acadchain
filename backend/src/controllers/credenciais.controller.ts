@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getDatabase } from '../config/database.js';
 import { BlockchainService } from '../services/blockchain.service.js';
+import { PdfService } from '../services/pdf.service.js';
 import {
   canonicalizeAcademicData,
   computeCanonicalSha256,
@@ -25,6 +26,8 @@ export class CredenciaisController {
           d.data_emissao,
           d.data_validade,
           d.hash_sha256_conteudo,
+          d.hash_sha256_pdf,
+          d.caminho_arquivo_pdf,
           d.status,
           d.tx_hash_blockchain,
           d.bloco_blockchain,
@@ -271,12 +274,46 @@ export class CredenciaisController {
       const canonicalHash = computeCanonicalSha256(academicData);
       const canonicalHashHex = ("0x" + canonicalHash) as `0x${string}`;
 
-      // 1. Salva no banco local como PENDENTE
+      // 1. Gera imediatamente o PDF e computa o hash dos seus bytes
+      const pdfParams = {
+        uuid,
+        tipo: tipo as 'DIPLOMA' | 'CERTIFICADO' | 'CARTEIRINHA',
+        titulo,
+        descricao,
+        dataEmissao,
+        estudante: {
+          nome: matricula.estudante_nome,
+          cpf: matricula.estudante_cpf,
+          email: matricula.estudante_email,
+        },
+        matricula: {
+          numero: matricula.numero_matricula,
+          curso: matricula.curso,
+          nivel: matricula.nivel,
+        },
+        instituicao: {
+          sigla: matricula.instituicao_sigla,
+          nome: matricula.instituicao_nome,
+          codigoMec: matricula.codigo_mec_ficticio,
+        },
+      };
+
+      let pdfResult;
+      if (tipo === 'CARTEIRINHA') {
+        pdfResult = await PdfService.generateStudentCardPdf(pdfParams);
+      } else {
+        pdfResult = await PdfService.generateDiplomaOrCertificadoPdf(pdfParams);
+      }
+
+      const fileHashHex = ("0x" + pdfResult.fileHashSha256) as `0x${string}`;
+
+      // 2. Salva no banco local com ambos os hashes (canônico + PDF físico)
       const insert = db.prepare(`
         INSERT INTO documentos (
           uuid_publico, matricula_id, tipo, titulo, descricao,
-          data_emissao, hash_sha256_conteudo, status, status_sincronizacao, dados_canonicos_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'EMITIDO', 'PENDENTE', ?)
+          data_emissao, hash_sha256_conteudo, hash_sha256_pdf, caminho_arquivo_pdf,
+          status, status_sincronizacao, dados_canonicos_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EMITIDO', 'PENDENTE', ?)
       `);
 
       insert.run(
@@ -287,15 +324,18 @@ export class CredenciaisController {
         descricao || null,
         dataEmissao,
         canonicalHash,
+        pdfResult.fileHashSha256,
+        pdfResult.relativeFilePath,
         canonicalString
       );
 
-      // 2. Grava na blockchain com a conta da instituição
+      // 3. Grava na blockchain com dupla prova (canônica + bytes do PDF)
       const instId = instituicaoId || matricula.instituicao_id;
       const txResult = await BlockchainService.issueCredentialOnChain(
         uuid,
         canonicalHashHex,
-        instId
+        instId,
+        fileHashHex
       );
 
       res.status(201).json({
@@ -303,7 +343,9 @@ export class CredenciaisController {
         mensagem: 'Credencial emitida e confirmada com sucesso na blockchain!',
         dados: {
           uuid,
-          hashSha256: canonicalHash,
+          hashSha256Canonica: canonicalHash,
+          hashSha256Pdf: pdfResult.fileHashSha256,
+          caminhoPdf: pdfResult.relativeFilePath,
           txHash: txResult.txHash,
           bloco: txResult.bloco,
           emissor: txResult.emissor,

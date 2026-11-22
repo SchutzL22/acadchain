@@ -9,6 +9,8 @@ import {
   LayoutDashboard,
   FlaskConical,
   Layers,
+  FileText,
+  FileCheck2,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -31,7 +33,7 @@ export const Navbar: React.FC = () => {
             <div>
               <span className="text-lg font-black tracking-tight text-brand-900">AcadChain</span>
               <span className="hidden md:inline-block ml-2 px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
-                Etapa 2: Blockchain Ativa
+                Etapa 3: Documentos & PDFs
               </span>
             </div>
           </NavLink>
@@ -42,12 +44,20 @@ export const Navbar: React.FC = () => {
               <LayoutDashboard className="w-4 h-4" />
               <span>Início</span>
             </NavLink>
+            <NavLink to="/documentos" className={navLinkClass}>
+              <FileText className="w-4 h-4 text-emerald-600" />
+              <span>Documentos</span>
+            </NavLink>
+            <NavLink to="/verificar-pdf" className={navLinkClass}>
+              <FileCheck2 className="w-4 h-4 text-blue-600" />
+              <span>Validar PDF</span>
+            </NavLink>
             <NavLink to="/laboratorio" className={navLinkClass}>
               <FlaskConical className="w-4 h-4 text-accent-500" />
               <span>Laboratório</span>
             </NavLink>
             <NavLink to="/explorador" className={navLinkClass}>
-              <Layers className="w-4 h-4 text-blue-500" />
+              <Layers className="w-4 h-4 text-indigo-500" />
               <span>Explorador</span>
             </NavLink>
             <NavLink to="/instituicoes" className={navLinkClass}>

@@ -26,6 +26,8 @@ export function runMigrations(): void {
     { nome: 'dados_canonicos_json', def: 'TEXT' },
     { nome: 'revogado_em', def: 'DATETIME' },
     { nome: 'motivo_revogacao', def: 'TEXT' },
+    { nome: 'hash_sha256_pdf', def: 'TEXT' },
+    { nome: 'caminho_arquivo_pdf', def: 'TEXT' },
   ];
 
   const colunasExistentes = (db.prepare("PRAGMA table_info(documentos)").all() as any[]).map(

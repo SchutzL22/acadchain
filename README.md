@@ -64,7 +64,9 @@ iniciar.bat
 ```
 Após a inicialização, acesse no seu navegador:
 - **Interface Geral:** [http://localhost:5173](http://localhost:5173)
-- **Laboratório Blockchain (5 Cenários):** [http://localhost:5173/laboratorio](http://localhost:5173/laboratorio)
+- **Documentos & Carteirinhas:** [http://localhost:5173/documentos](http://localhost:5173/documentos)
+- **Verificador de PDFs Criptográfico:** [http://localhost:5173/verificar-pdf](http://localhost:5173/verificar-pdf)
+- **Laboratório Blockchain (6 Cenários Didáticos):** [http://localhost:5173/laboratorio](http://localhost:5173/laboratorio)
 - **Explorador de Blocos:** [http://localhost:5173/explorador](http://localhost:5173/explorador)
 - **Backend API REST:** [http://localhost:3001/api/health](http://localhost:3001/api/health)
 - **Nó Ethereum Local:** [http://127.0.0.1:8545](http://127.0.0.1:8545)
@@ -86,9 +88,11 @@ resetar-demo.bat
 ## 🧪 Roteiro de Demonstração para Avaliadores (Banca/Professor)
 
 1. Execute `iniciar.bat` e abra [http://localhost:5173/laboratorio](http://localhost:5173/laboratorio).
-2. **Cenário A (Emissão):** Selecione a *Universidade Federal do Saber (UFS)* e emita uma credencial para um formando. Observe o hash da transação e o número do bloco minerado em tempo real.
-3. **Cenário B (Verificação):** Clique na aba de verificação e consulte o documento emitido. O Smart Contract confirmará matematicamente a autenticidade on-chain.
-4. **Cenário C (Adulteração):** Selecione o cenário de adulteração e modifique o curso de "Sistemas de Informação" para "Medicina". Observe a detecção imediata de fraude pelo recálculo do SHA-256 (efeito avalanche).
-5. **Cenário D (Revogação):** Revogue uma credencial formalmente e comprove que o contrato altera o status para `REVOKED` preservando a data e o motivo.
+2. **Cenário A (Emissão Real):** Selecione a *Universidade Federal do Saber (UFS)* e emita uma credencial para um formando. Observe a geração do PDF, o hash do arquivo físico e o registro duplo on-chain.
+3. **Cenário B (Verificação On-Chain):** Consulte o documento emitido. O Smart Contract confirmará matematicamente a autenticidade dos dados normalizados (RFC 8785).
+4. **Cenário C (Adulteração de Metadados):** Modifique o curso de "Sistemas de Informação" para "Medicina". Observe a detecção imediata de fraude pelo recálculo do SHA-256 (efeito avalanche).
+5. **Cenário D (Revogação Formal):** Revogue uma credencial formalmente e comprove que o contrato altera o status para `REVOKED` preservando data, bloco e motivo.
 6. **Cenário E (Ataque Não Autorizado):** Tente emitir um certificado utilizando a Conta Invasora (#9). Demonstre que a regra Solidity `onlyAuthorizedIssuer` reverte a transação e protege o consórcio.
-7. Acesse [http://localhost:5173/explorador](http://localhost:5173/explorador) para visualizar o histórico de blocos e transações gerados durante a demonstração.
+7. **Cenário F (Ataque Binário de 1 Byte em PDF):** Acesse a nova aba de teste em [http://localhost:5173/laboratorio](http://localhost:5173/laboratorio) ou a página [http://localhost:5173/documentos](http://localhost:5173/documentos), baixe o PDF original e o PDF adulterado em 1 byte. Arraste ambos para [http://localhost:5173/verificar-pdf](http://localhost:5173/verificar-pdf) e comprove que a blockchain rejeita a integridade física do documento alterado.
+8. **Carteirinha Digital Interativa:** Acesse [http://localhost:5173/documentos](http://localhost:5173/documentos) e visualize a carteirinha discente em padrão ID-1 com QR Code funcional e verso técnico criptográfico.
+9. Acesse [http://localhost:5173/explorador](http://localhost:5173/explorador) para visualizar o histórico de blocos e transações gerados durante a demonstração.

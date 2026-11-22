@@ -1,17 +1,17 @@
+import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import hre from "hardhat";
 import { keccak256, toHex, stringToHex } from "viem";
 
-describe("AcademicCredentialRegistry Smart Contract", function () {
-  this.timeout(60000);
-
+describe("AcademicCredentialRegistry Smart Contract (Hardhat 3)", () => {
   async function deployFixture() {
-    const [admin, ufs, itb, hacker] = await hre.viem.getWalletClients();
-    const publicClient = await hre.viem.getPublicClient();
+    const conn = await hre.network.connect();
+    const [admin, ufs, itb, hacker] = await conn.viem.getWalletClients();
+    const publicClient = await conn.viem.getPublicClient();
 
-    const registry = await hre.viem.deployContract("AcademicCredentialRegistry");
+    const registry = await conn.viem.deployContract("AcademicCredentialRegistry");
 
-    return { registry, admin, ufs, itb, hacker, publicClient };
+    return { registry, admin, ufs, itb, hacker, publicClient, conn };
   }
 
   it("1. Administrador consegue autorizar emissor (UFS e ITB)", async () => {
@@ -52,8 +52,8 @@ describe("AcademicCredentialRegistry Smart Contract", function () {
     const cred = await registry.read.getCredential([credId]);
     assert.equal(cred[0], credId);
     assert.equal(cred[1], hash);
-    assert.equal(cred[2].toLowerCase(), ufs.account.address.toLowerCase());
-    assert.equal(cred[4], 1); // ISSUED
+    assert.equal(cred[3].toLowerCase(), ufs.account.address.toLowerCase());
+    assert.equal(cred[5], 1); // ISSUED
   });
 
   it("4. Credencial emitida pode ser consultada e verificada", async () => {
@@ -100,8 +100,8 @@ describe("AcademicCredentialRegistry Smart Contract", function () {
     });
 
     const cred = await registry.read.getCredential([credId]);
-    assert.equal(cred[4], 2); // REVOKED
-    assert.equal(cred[6], "Matrícula cancelada formalmente");
+    assert.equal(cred[5], 2); // REVOKED
+    assert.equal(cred[7], "Matrícula cancelada formalmente");
 
     const [isValid, msg] = await registry.read.verifyCredential([credId, hash]);
     assert.equal(isValid, false);
@@ -118,7 +118,6 @@ describe("AcademicCredentialRegistry Smart Contract", function () {
 
     await registry.write.issueCredential([credId, hash], { account: ufs.account });
 
-    // ITB tenta revogar credencial da UFS
     await assert.rejects(
       async () => {
         await registry.write.revokeCredential([credId, "Tentativa indevida"], {
@@ -204,5 +203,39 @@ describe("AcademicCredentialRegistry Smart Contract", function () {
     const [isValid, msg] = await registry.read.verifyCredential([credId, hashAdulterado]);
     assert.equal(isValid, false);
     assert.match(msg, /ADULTERACAO DETECTADA/i);
+  });
+
+  it("13. Etapa 3: Emissão com FileHash (PDF) e verificação de dupla camada", async () => {
+    const { registry, admin, ufs } = await deployFixture();
+    await registry.write.authorizeIssuer([ufs.account.address, "UFS"], { account: admin.account });
+
+    const credId = keccak256(toHex("doc-com-pdf-01"));
+    const canonicalHash = keccak256(toHex("dados-canonicos-formando"));
+    const pdfBytesHash = keccak256(toHex("%PDF-1.4 bytes do diploma"));
+
+    await registry.write.issueCredentialWithFile([credId, canonicalHash, pdfBytesHash], {
+      account: ufs.account,
+    });
+
+    // 1. Verificação com ambos válidos
+    const [isCredValid, isFileValid, msg] = await registry.read.verifyCredentialFull([
+      credId,
+      canonicalHash,
+      pdfBytesHash,
+    ]);
+    assert.equal(isCredValid, true);
+    assert.equal(isFileValid, true);
+    assert.match(msg, /integro e verificado/i);
+
+    // 2. Verificação com PDF adulterado (fileHash divergente)
+    const pdfAdulteradoHash = keccak256(toHex("%PDF-1.4 bytes adulterados"));
+    const [isCredValid2, isFileValid2, msg2] = await registry.read.verifyCredentialFull([
+      credId,
+      canonicalHash,
+      pdfAdulteradoHash,
+    ]);
+    assert.equal(isCredValid2, true);
+    assert.equal(isFileValid2, false);
+    assert.match(msg2, /bytes foram modificados/i);
   });
 });

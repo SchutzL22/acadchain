@@ -75,3 +75,26 @@ test('GET /api/instituicoes/9999 deve retornar 404', async () => {
   const data = await res.json();
   assert.equal(data.sucesso, false);
 });
+
+test('GET /api/documentos/1/pdf deve retornar streaming de PDF válido e header de hash', async () => {
+  const res = await fetch(`${baseUrl}/api/documentos/1/pdf`);
+  assert.equal(res.status, 200);
+  assert.ok(res.headers.get('content-type')?.includes('application/pdf'));
+  assert.ok(res.headers.get('x-acadchain-sha256'));
+
+  const arrayBuffer = await res.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  assert.ok(buffer.length > 500);
+  assert.equal(buffer.subarray(0, 5).toString('ascii'), '%PDF-');
+});
+
+test('GET /api/documentos/2/carteirinha deve retornar dados formatados da carteirinha estudantil', async () => {
+  const res = await fetch(`${baseUrl}/api/documentos/2/carteirinha`);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.sucesso, true);
+  assert.equal(data.carteirinha.tipo, 'CARTEIRINHA');
+  assert.ok(data.carteirinha.estudante_nome);
+  assert.ok(data.carteirinha.numero_matricula);
+  assert.ok(data.carteirinha.qrCodeDataUrl.startsWith('data:image/png;base64,'));
+});

@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS documentos (
     dados_canonicos_json TEXT,
     revogado_em DATETIME,
     motivo_revogacao TEXT,
+    hash_sha256_pdf TEXT,
+    caminho_arquivo_pdf TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

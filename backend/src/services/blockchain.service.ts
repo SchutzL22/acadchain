@@ -142,21 +142,25 @@ export class BlockchainService {
     return {
       credentialId: res[0],
       canonicalHash: res[1],
-      issuerAddress: res[2],
-      issuedAt: Number(res[3]),
-      dataEmissaoFormatada: new Date(Number(res[3]) * 1000).toISOString(),
-      statusCode: Number(res[4]),
-      status: statusMap[Number(res[4])] || 'DESCONHECIDO',
-      revokedAt: Number(res[5]) > 0 ? Number(res[5]) : null,
+      fileHash:
+        res[2] && res[2] !== '0x0000000000000000000000000000000000000000000000000000000000000000'
+          ? res[2]
+          : null,
+      issuerAddress: res[3],
+      issuedAt: Number(res[4]),
+      dataEmissaoFormatada: new Date(Number(res[4]) * 1000).toISOString(),
+      statusCode: Number(res[5]),
+      status: statusMap[Number(res[5])] || 'DESCONHECIDO',
+      revokedAt: Number(res[6]) > 0 ? Number(res[6]) : null,
       dataRevogacaoFormatada:
-        Number(res[5]) > 0 ? new Date(Number(res[5]) * 1000).toISOString() : null,
-      revocationReason: res[6] || null,
-      issuerName: res[7],
+        Number(res[6]) > 0 ? new Date(Number(res[6]) * 1000).toISOString() : null,
+      revocationReason: res[7] || null,
+      issuerName: res[8],
     };
   }
 
   /**
-   * Valida a credencial contra a prova registrada no smart contract.
+   * Valida a credencial contra a prova registrada no smart contract (camada canônica).
    */
   public static async verifyCredentialOnChain(
     credentialIdHex: `0x${string}`,
@@ -196,12 +200,58 @@ export class BlockchainService {
   }
 
   /**
-   * Emite uma credencial acadêmica com transação real na blockchain.
+   * Valida a credencial contra dupla prova no smart contract: metadados canônicos + bytes do PDF.
+   */
+  public static async verifyCredentialFullOnChain(
+    credentialIdHex: `0x${string}`,
+    claimedCanonicalHashHex: `0x${string}`,
+    claimedFileHashHex: `0x${string}`
+  ) {
+    const manifest = loadManifest();
+    if (!manifest) {
+      return {
+        isValid: false,
+        isFileValid: false,
+        motivo: 'Contrato inteligente não está implantado ou manifesto indisponível.',
+      };
+    }
+
+    const publicClient = this.getPublicClient();
+    const contract = getContract({
+      address: manifest.contractAddress as Address,
+      abi: manifest.abi,
+      client: publicClient,
+    });
+
+    try {
+      const res = (await contract.read.verifyCredentialFull([
+        credentialIdHex,
+        claimedCanonicalHashHex,
+        claimedFileHashHex,
+      ])) as [boolean, boolean, string];
+
+      return {
+        isValid: res[0],
+        isFileValid: res[1],
+        motivo: res[2],
+      };
+    } catch (err: any) {
+      return {
+        isValid: false,
+        isFileValid: false,
+        motivo: `Erro ao consultar contrato: ${err.message}`,
+      };
+    }
+  }
+
+  /**
+   * Emite uma credencial acadêmica com transação real na blockchain (suporta hash do PDF).
    */
   public static async issueCredentialOnChain(
     uuid: string,
     canonicalHashHex: `0x${string}`,
-    instituicaoId: number
+    instituicaoId: number,
+    fileHashHex?: `0x${string}`
   ) {
     const manifest = loadManifest();
     if (!manifest) throw new Error('Smart contract não configurado.');
@@ -222,13 +272,27 @@ export class BlockchainService {
 
     const credentialId = keccak256(stringToHex(uuid.toLowerCase().trim()));
 
-    // Envia transação
-    const hash = await walletClient.writeContract({
-      address: manifest.contractAddress as Address,
-      abi: manifest.abi,
-      functionName: 'issueCredential',
-      args: [credentialId, canonicalHashHex],
-    });
+    // Envia transação: com ou sem fileHash
+    let hash: Hash;
+    if (
+      fileHashHex &&
+      fileHashHex !== '0x' &&
+      fileHashHex !== '0x0000000000000000000000000000000000000000000000000000000000000000'
+    ) {
+      hash = await walletClient.writeContract({
+        address: manifest.contractAddress as Address,
+        abi: manifest.abi,
+        functionName: 'issueCredentialWithFile',
+        args: [credentialId, canonicalHashHex, fileHashHex],
+      });
+    } else {
+      hash = await walletClient.writeContract({
+        address: manifest.contractAddress as Address,
+        abi: manifest.abi,
+        functionName: 'issueCredential',
+        args: [credentialId, canonicalHashHex],
+      });
+    }
 
     // Aguarda confirmação do bloco
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -265,6 +329,7 @@ export class BlockchainService {
       bloco: Number(receipt.blockNumber),
       credentialId,
       canonicalHash: canonicalHashHex,
+      fileHash: fileHashHex || null,
       emissor: account.address,
       gasUsado: receipt.gasUsed.toString(),
     };

@@ -34,6 +34,8 @@ export interface DocumentoResumo {
   descricao?: string;
   data_emissao: string;
   hash_sha256_conteudo: string;
+  hash_sha256_pdf?: string | null;
+  caminho_arquivo_pdf?: string | null;
   status: 'EMITIDO' | 'REVOGADO' | 'EXPIRADO';
   tx_hash_blockchain?: string | null;
   bloco_blockchain?: number | null;
@@ -109,4 +111,46 @@ export interface ApiResponse<T> {
   dados?: T;
   erro?: string;
   total?: number;
+}
+
+export interface CarteirinhaData extends DocumentoResumo {
+  matricula_id: number;
+  matricula_status: string;
+  codigo_mec_ficticio: string;
+  estudante_email?: string;
+  data_validade?: string;
+  verificarUrl: string;
+  estadoBlockchain?: any;
+}
+
+export interface VerificacaoPdfResult {
+  sucesso: boolean;
+  autentico: boolean;
+  motivo: string;
+  hashArquivoSha256?: string;
+  hashCalculado?: string;
+  hashCanonicoCalculado?: string;
+  hashRegistradoNoBanco?: string;
+  tamanhoBytes?: number;
+  nomeOriginal?: string;
+  duplaCamada?: {
+    metadadosCanonicosValidos: boolean;
+    arquivoFisicoValido: boolean;
+  };
+  documento?: {
+    uuid: string;
+    tipo: 'DIPLOMA' | 'CERTIFICADO' | 'CARTEIRINHA';
+    titulo: string;
+    estudante: string;
+    cpf: string;
+    curso: string;
+    matricula: string;
+    instituicao: string;
+    siglaInstituicao: string;
+    dataEmissao: string;
+    status: string;
+    statusSincronizacao: string;
+    txHash: string;
+    bloco: number;
+  };
 }

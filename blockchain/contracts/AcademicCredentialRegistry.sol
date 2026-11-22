@@ -2,11 +2,12 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title AcademicCredentialRegistry
+ * @title AcademicCredentialRegistry (v2.0)
  * @dev Registro descentralizado e compartilhado de atestações acadêmicas para o projeto AcadChain.
- *      Implementa modelo "Off-Chain Data, On-Chain Proofs": nenhum dado pessoal sensível (como
- *      nome, CPF ou notas) é armazenado na blockchain. Apenas identificadores e hashes criptográficos
- *      canônicos (SHA-256) são gravados de forma imutável e verificável.
+ *      Implementa modelo "Off-Chain Data, On-Chain Proofs":
+ *      - Prova 1: canonicalHash (SHA-256 dos metadados acadêmicos canônicos estruturados)
+ *      - Prova 2: fileHash (SHA-256 dos bytes físicos do arquivo PDF gerado pelo sistema)
+ *      Nenhum dado pessoal sensível (nome, CPF, notas) é armazenado diretamente no ledger.
  */
 contract AcademicCredentialRegistry {
     // --- Tipos de Dados ---
@@ -18,7 +19,8 @@ contract AcademicCredentialRegistry {
 
     struct Credential {
         bytes32 credentialId;      // Identificador unívoco derivado ou UUID hash
-        bytes32 canonicalHash;     // Hash SHA-256 do conteúdo canônico do documento
+        bytes32 canonicalHash;     // Hash SHA-256 dos dados acadêmicos estruturados
+        bytes32 fileHash;          // Hash SHA-256 dos bytes finais do PDF (se emitido)
         address issuer;            // Endereço da instituição emissora
         uint256 issuedAt;          // Timestamp do bloco de emissão
         CredentialStatus status;   // Estado atual da credencial
@@ -48,6 +50,13 @@ contract AcademicCredentialRegistry {
         bytes32 indexed credentialId,
         bytes32 indexed canonicalHash,
         address indexed issuer,
+        uint256 issuedAt
+    );
+    event CredentialIssuedWithFile(
+        bytes32 indexed credentialId,
+        bytes32 indexed canonicalHash,
+        bytes32 indexed fileHash,
+        address issuer,
         uint256 issuedAt
     );
     event CredentialRevoked(
@@ -83,7 +92,6 @@ contract AcademicCredentialRegistry {
 
     constructor() {
         admin = msg.sender;
-        // O administrador da rede também é registrado como emissor inicial com fins administrativos
         issuers[msg.sender] = IssuerInfo({
             isAuthorized: true,
             institutionName: "Consorcio AcadChain (Admin)",
@@ -94,11 +102,6 @@ contract AcademicCredentialRegistry {
 
     // --- Gestão de Instituições do Consórcio ---
 
-    /**
-     * @notice Autoriza uma nova Instituição de Ensino Superior (IES) a emitir credenciais.
-     * @param issuer Endereço Ethereum da carteira/servidor da instituição.
-     * @param name Nome ou sigla oficial da instituição.
-     */
     function authorizeIssuer(address issuer, string calldata name) external onlyAdmin {
         if (issuer == address(0)) revert InvalidZeroAddress();
         if (issuers[issuer].isAuthorized) revert IssuerAlreadyAuthorized();
@@ -112,10 +115,6 @@ contract AcademicCredentialRegistry {
         emit IssuerAuthorized(issuer, name, msg.sender, block.timestamp);
     }
 
-    /**
-     * @notice Desautoriza uma IES do consórcio. Emissões históricas permanecem imutáveis.
-     * @param issuer Endereço da instituição a ser descredenciada.
-     */
     function deauthorizeIssuer(address issuer) external onlyAdmin {
         if (!issuers[issuer].isAuthorized) revert IssuerNotAuthorized();
 
@@ -123,9 +122,6 @@ contract AcademicCredentialRegistry {
         emit IssuerDeauthorized(issuer, msg.sender, block.timestamp);
     }
 
-    /**
-     * @notice Verifica se determinado endereço é um emissor atualmente autorizado.
-     */
     function isIssuerAuthorized(address issuer) external view returns (bool) {
         return issuers[issuer].isAuthorized;
     }
@@ -133,11 +129,26 @@ contract AcademicCredentialRegistry {
     // --- Emissão e Registro de Credenciais ---
 
     /**
-     * @notice Emite e registra a prova criptográfica de uma credencial acadêmica.
-     * @param credentialId Identificador criptográfico único de 32 bytes (ex: hash do UUID).
-     * @param canonicalHash Hash SHA-256 calculado determinísticamente sobre os dados acadêmicos.
+     * @notice Emite credencial com prova dos dados canônicos.
      */
     function issueCredential(bytes32 credentialId, bytes32 canonicalHash) external onlyAuthorizedIssuer {
+        _issueInternal(credentialId, canonicalHash, bytes32(0));
+        emit CredentialIssued(credentialId, canonicalHash, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @notice Emite credencial registrando tanto a prova dos dados canônicos quanto o hash do arquivo PDF binário.
+     */
+    function issueCredentialWithFile(
+        bytes32 credentialId,
+        bytes32 canonicalHash,
+        bytes32 fileHash
+    ) external onlyAuthorizedIssuer {
+        _issueInternal(credentialId, canonicalHash, fileHash);
+        emit CredentialIssuedWithFile(credentialId, canonicalHash, fileHash, msg.sender, block.timestamp);
+    }
+
+    function _issueInternal(bytes32 credentialId, bytes32 canonicalHash, bytes32 fileHash) internal {
         if (credentialId == bytes32(0)) revert EmptyIdentifier();
         if (canonicalHash == bytes32(0)) revert EmptyHash();
         if (_credentials[credentialId].status != CredentialStatus.NONE) {
@@ -147,6 +158,7 @@ contract AcademicCredentialRegistry {
         _credentials[credentialId] = Credential({
             credentialId: credentialId,
             canonicalHash: canonicalHash,
+            fileHash: fileHash,
             issuer: msg.sender,
             issuedAt: block.timestamp,
             status: CredentialStatus.ISSUED,
@@ -156,21 +168,17 @@ contract AcademicCredentialRegistry {
 
         _allCredentialIds.push(credentialId);
         totalCredentialsIssued++;
-
-        emit CredentialIssued(credentialId, canonicalHash, msg.sender, block.timestamp);
     }
 
     // --- Consulta de Credenciais ---
 
-    /**
-     * @notice Consulta todos os dados on-chain de uma credencial pelo seu identificador.
-     */
     function getCredential(bytes32 credentialId)
         external
         view
         returns (
             bytes32 id,
             bytes32 canonicalHash,
+            bytes32 fileHash,
             address issuer,
             uint256 issuedAt,
             CredentialStatus status,
@@ -185,6 +193,7 @@ contract AcademicCredentialRegistry {
         return (
             cred.credentialId,
             cred.canonicalHash,
+            cred.fileHash,
             cred.issuer,
             cred.issuedAt,
             cred.status,
@@ -194,13 +203,6 @@ contract AcademicCredentialRegistry {
         );
     }
 
-    /**
-     * @notice Verifica se uma credencial está válida e se o hash apresentado coincide com a blockchain.
-     * @param credentialId Identificador da credencial.
-     * @param claimedHash Hash que o verificador recalculou a partir do documento apresentado.
-     * @return isValid Verdadeiro se a credencial existe, está no status ISSUED e o hash coincide.
-     * @return reason Explicação semântica do resultado.
-     */
     function verifyCredential(bytes32 credentialId, bytes32 claimedHash)
         external
         view
@@ -223,20 +225,46 @@ contract AcademicCredentialRegistry {
         return (true, "Credencial autentica, valida e com integridade comprovada");
     }
 
+    /**
+     * @notice Verificação completa de dupla camada (dados canônicos + bytes do PDF).
+     */
+    function verifyCredentialFull(
+        bytes32 credentialId,
+        bytes32 claimedCanonicalHash,
+        bytes32 claimedFileHash
+    ) external view returns (bool isValid, bool isFileValid, string memory reason) {
+        Credential memory cred = _credentials[credentialId];
+
+        if (cred.status == CredentialStatus.NONE) {
+            return (false, false, "Credencial nao encontrada no registro da blockchain");
+        }
+
+        if (cred.status == CredentialStatus.REVOKED) {
+            return (false, false, "Credencial foi formalmente REVOGADA");
+        }
+
+        bool canonicalOk = (cred.canonicalHash == claimedCanonicalHash);
+        bool fileOk = (cred.fileHash == bytes32(0) || cred.fileHash == claimedFileHash);
+
+        if (!canonicalOk) {
+            return (false, false, "ADULTERACAO DETECTADA nos dados estruturados da credencial");
+        }
+
+        if (!fileOk) {
+            return (true, false, "ADULTERACAO DETECTADA no arquivo PDF fisico: os bytes foram modificados");
+        }
+
+        return (true, true, "Credencial autentica e arquivo PDF fisico integro e verificado");
+    }
+
     // --- Revogação de Credenciais ---
 
-    /**
-     * @notice Revoga uma credencial emitida. Apenas a instituição que emitiu originalmente ou o admin podem revogar.
-     * @param credentialId Identificador da credencial.
-     * @param reason Justificativa acadêmica ou legal da revogação.
-     */
     function revokeCredential(bytes32 credentialId, string calldata reason) external {
         Credential storage cred = _credentials[credentialId];
 
         if (cred.status == CredentialStatus.NONE) revert CredentialNotFound(credentialId);
         if (cred.status == CredentialStatus.REVOKED) revert CredentialAlreadyRevoked(credentialId);
 
-        // Apenas o emissor original ou o admin do consórcio podem revogar
         if (msg.sender != cred.issuer && msg.sender != admin) {
             revert UnauthorizedRevoker(msg.sender, cred.issuer);
         }
@@ -250,16 +278,10 @@ contract AcademicCredentialRegistry {
         emit CredentialRevoked(credentialId, msg.sender, reason, block.timestamp);
     }
 
-    /**
-     * @notice Retorna o total de credenciais registradas no histórico.
-     */
     function getTotalCredentials() external view returns (uint256) {
         return _allCredentialIds.length;
     }
 
-    /**
-     * @notice Retorna a lista completa de IDs de credenciais emitidas.
-     */
     function getAllCredentialIds() external view returns (bytes32[] memory) {
         return _allCredentialIds;
     }

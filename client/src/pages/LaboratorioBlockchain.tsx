@@ -12,6 +12,8 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
+  FileDown,
+  Bug,
 } from 'lucide-react';
 import {
   fetchBlockchainStatus,
@@ -20,13 +22,16 @@ import {
   emitirCredencial,
   verificarCredencial,
   revogarCredencial,
+  getPdfDownloadUrl,
+  getPdfAdulteradoUrl,
+  verificarPdf,
 } from '../services/api';
-import { BlockchainStatus, DocumentoResumo, Estudante } from '../types';
+import { BlockchainStatus, DocumentoResumo, Estudante, VerificacaoPdfResult } from '../types';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 
 export const LaboratorioBlockchain: React.FC = () => {
-  const [cenarioAtivo, setCenarioAtivo] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
+  const [cenarioAtivo, setCenarioAtivo] = useState<'A' | 'B' | 'C' | 'D' | 'E' | 'F'>('A');
   const [statusRede, setStatusRede] = useState<BlockchainStatus | null>(null);
   const [credenciais, setCredenciais] = useState<DocumentoResumo[]>([]);
   const [estudantes, setEstudantes] = useState<Estudante[]>([]);
@@ -64,6 +69,12 @@ export const LaboratorioBlockchain: React.FC = () => {
   const [testandoNaoAutorizado, setTestandoNaoAutorizado] = useState(false);
   const [resultadoNaoAutorizado, setResultadoNaoAutorizado] = useState<any>(null);
 
+  // Cenário F (Ataque de 1 Byte no PDF)
+  const [docPdfSelecionado, setDocPdfSelecionado] = useState<string>('');
+  const [arquivoPdfTeste, setArquivoPdfTeste] = useState<File | null>(null);
+  const [analisandoPdf, setAnalisandoPdf] = useState(false);
+  const [resultadoAnalisePdf, setResultadoAnalisePdf] = useState<VerificacaoPdfResult | null>(null);
+
   const carregarDados = async () => {
     try {
       setLoading(true);
@@ -83,6 +94,7 @@ export const LaboratorioBlockchain: React.FC = () => {
         setCursoOriginal(creds[0].curso || 'Curso de Graduação');
         setCursoAdulterado(creds[0].curso || 'Curso de Graduação');
         setCredRevogar(creds[0].uuid_publico);
+        setDocPdfSelecionado(creds[0].uuid_publico);
       }
     } catch (err: any) {
       setErro(err.message || 'Falha ao conectar com o backend e a blockchain');
@@ -267,13 +279,14 @@ export const LaboratorioBlockchain: React.FC = () => {
       )}
 
       {/* Seletor de Cenários Didáticos */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {[
-          { id: 'A', label: 'Cenário A: Emissão Real', desc: 'Registrar credencial on-chain' },
+          { id: 'A', label: 'Cenário A: Emissão', desc: 'Transação real on-chain' },
           { id: 'B', label: 'Cenário B: Verificação', desc: 'Validar prova matemática' },
-          { id: 'C', label: 'Cenário C: Adulteração', desc: 'Detectar fraude com SHA-256' },
+          { id: 'C', label: 'Cenário C: Adulteração', desc: 'Detecção em metadados' },
           { id: 'D', label: 'Cenário D: Revogação', desc: 'Invalidar credencial' },
-          { id: 'E', label: 'Cenário E: Ataque Hacker', desc: 'Bloqueio de não-autorizado' },
+          { id: 'E', label: 'Cenário E: Não Autorizado', desc: 'Bloqueio de invasor' },
+          { id: 'F', label: 'Cenário F: Ataque PDF', desc: 'Corrupção de 1 byte' },
         ].map((c) => (
           <button
             key={c.id}
@@ -757,6 +770,160 @@ export const LaboratorioBlockchain: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* =============================================================== */}
+      {/* CENÁRIO F: ATAQUE DE 1 BYTE NO PDF (DUPLA PROVA ON-CHAIN) */}
+      {/* =============================================================== */}
+      {cenarioAtivo === 'F' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Bug className="w-5 h-5 text-amber-600" />
+              Cenário F: Ataque de Adulteração de 1 Byte em Arquivo PDF
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Demonstra que qualquer alteração física de bytes no PDF renderizado invalida a prova registrada na blockchain (<code>AcademicCredentialRegistry.verifyCredentialFull</code>), mesmo que o layout visual aparente legitimidade.
+            </p>
+          </div>
+
+          {/* Seleção do Documento */}
+          <div className="space-y-4 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Selecione o Documento para o Teste:</label>
+              <select
+                value={docPdfSelecionado}
+                onChange={(e) => {
+                  setDocPdfSelecionado(e.target.value);
+                  setResultadoAnalisePdf(null);
+                  setArquivoPdfTeste(null);
+                }}
+                className="w-full p-2.5 border rounded-lg bg-slate-50 focus:bg-white text-xs"
+              >
+                {credenciais.map((c) => (
+                  <option key={c.uuid_publico} value={c.uuid_publico}>
+                    [{c.tipo}] {c.titulo} — {c.estudante_nome} ({c.instituicao_sigla})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Ações de Download para Comparação */}
+            {docPdfSelecionado && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-800 text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Arquivo Original Íntegro</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    PDF oficial gerado com QR Code canônico. Seus bytes conferem exatamente com a prova on-chain.
+                  </p>
+                  <a
+                    href={getPdfDownloadUrl(docPdfSelecionado, true)}
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+                  >
+                    <FileDown className="w-4 h-4" />
+                    <span>Baixar PDF Original</span>
+                  </a>
+                </div>
+
+                <div className="space-y-2 border-t sm:border-t-0 sm:border-l sm:pl-4 border-slate-200 pt-3 sm:pt-0">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-800 text-xs">
+                    <Bug className="w-4 h-4 text-amber-600" />
+                    <span>Arquivo com Ataque de 1 Byte</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    O endpoint de laboratório inverteu 1 único byte binário (bit flip) no corpo do PDF.
+                  </p>
+                  <a
+                    href={getPdfAdulteradoUrl(docPdfSelecionado)}
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+                  >
+                    <Bug className="w-4 h-4" />
+                    <span>Baixar PDF Adulterado</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Mini Verificador Integrado */}
+            <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+              <span className="font-bold text-xs text-slate-800 block">
+                Audite Qualquer um dos Arquivos Acima:
+              </span>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setArquivoPdfTeste(e.target.files[0]);
+                      setResultadoAnalisePdf(null);
+                    }
+                  }}
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-900 file:text-white hover:file:bg-brand-950 cursor-pointer"
+                />
+
+                <button
+                  type="button"
+                  disabled={!arquivoPdfTeste || analisandoPdf}
+                  onClick={async () => {
+                    if (!arquivoPdfTeste) return;
+                    try {
+                      setAnalisandoPdf(true);
+                      const res = await verificarPdf(arquivoPdfTeste);
+                      setResultadoAnalisePdf(res);
+                    } catch (err: any) {
+                      alert(`Falha na verificação: ${err.message}`);
+                    } finally {
+                      setAnalisandoPdf(false);
+                    }
+                  }}
+                  className="w-full sm:w-auto shrink-0 px-4 py-2 bg-brand-900 hover:bg-brand-950 text-white rounded-lg text-xs font-bold transition shadow-sm disabled:opacity-50"
+                >
+                  {analisandoPdf ? 'Calculando SHA-256...' : 'Testar na Blockchain'}
+                </button>
+              </div>
+
+              {/* Resultado do Teste no Mini Verificador */}
+              {resultadoAnalisePdf && (
+                <div
+                  className={`p-4 rounded-xl border text-xs space-y-2 mt-3 animate-in fade-in ${
+                    resultadoAnalisePdf.autentico
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                      : 'bg-rose-50 border-rose-300 text-rose-950'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    {resultadoAnalisePdf.autentico ? (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        <span>Arquivo Original Confirmado: 100% Autêntico e Íntegro!</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-5 h-5 text-rose-600" />
+                        <span>Adulteração Detectada: Prova Física Rejeitada pelo Smart Contract!</span>
+                      </>
+                    )}
+                  </div>
+
+                  <p className="text-xs leading-relaxed">
+                    {resultadoAnalisePdf.motivo}
+                  </p>
+
+                  <div className="p-2 bg-white/90 rounded border font-mono text-[10px] break-all">
+                    Hash SHA-256 Calculado: {resultadoAnalisePdf.hashCalculado || resultadoAnalisePdf.hashArquivoSha256}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
