@@ -18,7 +18,7 @@ export class EstudantesController {
 
   public static buscarPorId(req: Request, res: Response, next: NextFunction): void {
     try {
-      const id = parseInt(req.params.id, 10);
+      const id = parseInt(String(req.params.id), 10);
       if (isNaN(id)) {
         res.status(400).json({
           sucesso: false,

@@ -3,9 +3,17 @@ import cors from 'cors';
 import { env } from './config/env.js';
 import apiRouter from './routes/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { runMigrations } from './db/migrate.js';
 
 export function createApp(): Application {
   const app = express();
+
+  // Executa migrações não destrutivas no SQLite
+  try {
+    runMigrations();
+  } catch (err: any) {
+    console.warn('[AcadChain App] Aviso durante migrações do banco:', err.message);
+  }
 
   // CORS configurado para aceitar frontend autorizado
   app.use(
@@ -17,20 +25,25 @@ export function createApp(): Application {
     })
   );
 
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
 
   // Rota raiz informativa
   app.get('/', (req, res) => {
     res.json({
       projeto: 'AcadChain',
       tema: 'Blockchain para Certificação Acadêmica Nacional',
-      status: 'API operacional',
+      status: 'API operacional (Etapa 2 - Blockchain Ativa)',
       endpoints: [
         '/api/health',
         '/api/instituicoes',
-        '/api/instituicoes/:id',
         '/api/estudantes',
-        '/api/estudantes/:id',
+        '/api/blockchain/status',
+        '/api/blockchain/contrato',
+        '/api/blockchain/transacoes',
+        '/api/credenciais',
+        '/api/credenciais/:id/verificar',
+        '/api/credenciais/emitir',
+        '/api/credenciais/:id/revogar',
       ],
       documentacao: 'Consulte /documentacao na raiz do projeto',
     });

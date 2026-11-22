@@ -67,6 +67,11 @@ CREATE TABLE IF NOT EXISTS documentos (
     tx_hash_blockchain TEXT,
     bloco_blockchain INTEGER,
     smart_contract_address TEXT,
+    endereco_emissor_blockchain TEXT,
+    status_sincronizacao TEXT NOT NULL DEFAULT 'NAO_SINCRONIZADO' CHECK(status_sincronizacao IN ('NAO_SINCRONIZADO', 'PENDENTE', 'CONFIRMADO_ONCHAIN', 'FALHA_ONCHAIN', 'REVOGADO_ONCHAIN')),
+    dados_canonicos_json TEXT,
+    revogado_em DATETIME,
+    motivo_revogacao TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -81,6 +86,20 @@ CREATE TABLE IF NOT EXISTS auditoria (
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 7. Histórico de Transações e Operações na Blockchain
+CREATE TABLE IF NOT EXISTS transacoes_blockchain (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER REFERENCES documentos(id) ON DELETE CASCADE,
+    tipo_operacao TEXT NOT NULL CHECK(tipo_operacao IN ('DEPLOY', 'AUTORIZAR_EMISSOR', 'EMISSAO', 'REVOGACAO')),
+    tx_hash TEXT NOT NULL UNIQUE,
+    bloco INTEGER,
+    de_endereco TEXT NOT NULL,
+    para_endereco TEXT NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('PENDENTE', 'CONFIRMADA', 'FALHA')),
+    detalhes TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Índices de Otimização
 CREATE INDEX IF NOT EXISTS idx_instituicoes_sigla ON instituicoes(sigla);
 CREATE INDEX IF NOT EXISTS idx_estudantes_cpf ON estudantes(cpf_ficticio);
@@ -88,4 +107,6 @@ CREATE INDEX IF NOT EXISTS idx_matriculas_estudante ON matriculas(estudante_id);
 CREATE INDEX IF NOT EXISTS idx_matriculas_instituicao ON matriculas(instituicao_id);
 CREATE INDEX IF NOT EXISTS idx_documentos_uuid ON documentos(uuid_publico);
 CREATE INDEX IF NOT EXISTS idx_documentos_hash ON documentos(hash_sha256_conteudo);
+CREATE INDEX IF NOT EXISTS idx_documentos_sync ON documentos(status_sincronizacao);
 CREATE INDEX IF NOT EXISTS idx_auditoria_tabela ON auditoria(tabela_afetada, registro_id);
+CREATE INDEX IF NOT EXISTS idx_transacoes_tx ON transacoes_blockchain(tx_hash);

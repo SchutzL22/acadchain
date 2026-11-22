@@ -1,0 +1,22 @@
+{
+  "name": "acadchain-blockchain",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Módulo de Smart Contracts Solidity e Nó Hardhat Local do AcadChain",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node --hostname 127.0.0.1 --port 8545",
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "build": "hardhat compile"
+  },
+  "dependencies": {
+    "viem": "^2.21.54"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
+    "@types/node": "^22.10.1",
+    "hardhat": "^2.22.18",
+    "typescript": "^5.7.2"
+  }
+}

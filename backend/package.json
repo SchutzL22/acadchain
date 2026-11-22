@@ -1,19 +1,21 @@
 {
   "name": "acadchain-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Backend API REST do AcadChain em Node.js e TypeScript com node:sqlite",
+  "description": "Backend API REST do AcadChain em Node.js e TypeScript com node:sqlite e integração Viem",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "node --test tests/**/*.test.ts"
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "viem": "^2.21.54"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

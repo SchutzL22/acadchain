@@ -1,39 +1,35 @@
 # 06 - Roadmap do AcadChain
 
-O desenvolvimento do AcadChain está estruturado em 4 etapas sequenciais:
-
 ---
 
 ## Etapa 1: Fundação Arquitetural, Banco e Interface Inicial (STATUS: CONCLUÍDA)
-- Estrutura de Monorepo com npm workspaces.
-- Banco SQLite local via `node:sqlite` nativo com integridade referencial.
-- Dados de teste fictícios para 3 instituições e múltiplos estudantes.
-- Backend Express com rotas de consulta (`/api/health`, `/api/instituicoes`, `/api/estudantes`).
-- Frontend moderno em React + Vite + Tailwind com dados reais.
-- Scripts para Windows 11 (`instalar.bat`, `iniciar.bat`, `parar.bat`, `resetar-demo.bat`).
-- Contextualização para agentes de IA e documentação científica.
+- Monorepo com npm workspaces (`backend`, `client`, `blockchain`).
+- Banco SQLite local com `node:sqlite` nativo.
+- Backend Express TypeScript e rotas básicas.
+- Frontend React + Vite + Tailwind.
 
 ---
 
-## Etapa 2: Camada de Blockchain e Smart Contracts
-- Configuração do Hardhat 3 em `blockchain/`.
-- Desenvolvimento dos contratos em Solidity:
-  - `AcadChainRegistry.sol`: Registro de IES autorizadas pelo consórcio.
-  - `AcademicCredential.sol`: Gravação de hashes SHA-256 e estado (emitido, revogado).
-- Deploy e testes automatizados em nó local Hardhat Network.
-- Integração da API Express com o nó local via provider JSON-RPC.
+## Etapa 2: Blockchain Hardhat Local e Smart Contracts (STATUS: CONCLUÍDA)
+- Configuração do Hardhat 3 com Solidity 0.8.24 e Viem.
+- Contrato `AcademicCredentialRegistry.sol` com governança de IES autorizadas, emissão, consulta e revogação.
+- 12 testes automatizados em Solidity aprovados.
+- Deploy automatizado e manifesto compartilhado.
+- Canonicalização determinística (RFC 8785) e cálculo do hash SHA-256.
+- Endpoints REST para status da rede, emissão, verificação e revogação.
+- Laboratório Blockchain com 5 cenários práticos (A, B, C, D, E).
+- Explorador AcadChain com blocos e transações reais.
+- Scripts Windows atualizados (`instalar.bat`, `iniciar.bat`, `parar.bat`, `resetar-demo.bat`).
 
 ---
 
-## Etapa 3: Emissão Criptográfica, QR Code e Verificação Pública
-- Cálculo determinístico de hash SHA-256 de dados do diploma/carteirinha.
-- Emissão de documento com carimbo criptográfico e gravação da transação na blockchain.
-- Geração de QR Code legível contendo URL de conferência pública.
-- Painel de Verificação Pública completo: busca por hash ou leitura de arquivo, demonstrando em tempo real se o documento é autêntico, adulterado ou revogado.
+## Etapa 3: Emissão de PDFs, Assinatura e QR Code (PREVISTA)
+- Geração de diploma em PDF canônico com metadados estruturados.
+- Geração de QR Code contendo a URL de validação pública com o hash do documento.
+- Leitor de PDF na interface para conferência direta de arquivos locais.
 
 ---
 
-## Etapa 4: Auditoria, Comparativo Científico e Demonstração Interativa
-- Módulo de comparação: "Banco Tradicional vs. Blockchain" (demonstrando o risco de adulteração direta em banco SQL sem histórico criptográfico).
-- Simulação de revogação de diploma e desativação de carteirinha.
-- Preparação de relatório acadêmico de resultados e benchmarks de latência/custo de transação simulado.
+## Etapa 4: Auditoria Avançada e Consolidação Científica (PREVISTA)
+- Artigo científico final com métricas empíricas de gas, tempo de confirmação e benchmarks.
+- Demonstração comparativa "Banco Centralizado vs. Ledger Distribuído".

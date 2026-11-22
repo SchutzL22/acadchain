@@ -1,20 +1,21 @@
 @echo off
 setlocal enabledelayedexpansion
-title AcadChain - Instalador (Windows 11)
+title AcadChain - Instalador Completo (Windows 11)
 
 echo =======================================================
 echo   AcadChain: Instalacao e Preparacao do Ambiente
+echo   (Frontend, Backend Express, SQLite e Blockchain Hardhat)
 echo =======================================================
 echo.
 
 cd /d "%~dp0"
 
-echo [1/4] Verificando ferramentas necessarias...
+echo [1/5] Verificando ambiente e ferramentas necessarias...
 
 where node >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERRO] Node.js nao foi encontrado no PATH.
-    echo Por favor, instale o Node.js 24 LTS ou superior: https://nodejs.org/
+    echo Instale o Node.js 24 LTS ou superior: https://nodejs.org/
     pause
     exit /b 1
 )
@@ -33,22 +34,22 @@ if %errorlevel% neq 0 (
 
 node scripts/check-env.mjs
 if %errorlevel% neq 0 (
-    echo [ERRO] O ambiente nao atende aos requisitos minimos.
+    echo [ERRO] O ambiente nao atende aos requisitos minimos de compatibilidade.
     pause
     exit /b 1
 )
 
 echo.
-echo [2/4] Copiando .env.example para .env caso nao exista...
+echo [2/5] Verificando arquivo de configuracao (.env)...
 if not exist "%~dp0.env" (
     copy "%~dp0.env.example" "%~dp0.env" >nul
-    echo Arquivo .env criado com sucesso.
+    echo Arquivo .env criado a partir de .env.example.
 ) else (
     echo Arquivo .env ja existente. Mantendo configuracao atual.
 )
 
 echo.
-echo [3/4] Instalando dependencias com npm workspaces...
+echo [3/5] Instalando dependencias com npm workspaces (backend, client, blockchain)...
 call npm install
 if %errorlevel% neq 0 (
     echo [ERRO] Falha ao instalar dependencias com o npm.
@@ -57,25 +58,34 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo [4/4] Inicializando banco de dados local SQLite e dados ficticios...
+echo [4/5] Compilando contratos inteligentes Solidity (Hardhat)...
+call npm run compile:contracts
+if %errorlevel% neq 0 (
+    echo [ERRO] Falha ao compilar contratos inteligentes Solidity.
+    pause
+    exit /b 1
+)
+
+echo.
+echo [5/5] Inicializando banco de dados local SQLite e dados ficticios...
 node scripts/init-db.mjs
 if %errorlevel% neq 0 (
-    echo [ERRO] Falha ao criar tabelas no banco de dados.
+    echo [ERRO] Falha ao criar tabelas no banco SQLite.
     pause
     exit /b 1
 )
 
 node scripts/seed-db.mjs
 if %errorlevel% neq 0 (
-    echo [ERRO] Falha ao inserir dados ficticios de exemplo.
+    echo [ERRO] Falha ao popular dados ficticios de exemplo.
     pause
     exit /b 1
 )
 
 echo.
 echo =======================================================
-echo   Instalacao concluida com sucesso!
-echo   Para iniciar a aplicacao, execute: iniciar.bat
+echo   Instalacao e compilacao concluidas com sucesso!
+echo   Para iniciar a aplicacao completa: iniciar.bat
 echo =======================================================
 echo.
 pause

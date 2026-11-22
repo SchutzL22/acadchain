@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, ShieldCheck, Database, Cpu, Lock, FileCode, CheckCircle2 } from 'lucide-react';
+import { BookOpen, ShieldCheck, Database, Cpu, Lock } from 'lucide-react';
 
 export const ComoFunciona: React.FC = () => {
   return (

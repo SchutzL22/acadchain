@@ -1,27 +1,28 @@
 # 09 - Orientações para Agentes de IA em Novas Sessões
 
-Se você está iniciando uma nova sessão para continuar o desenvolvimento do AcadChain, siga este checklist para descobrir o próximo passo sem duplicar trabalho:
+Se você é um agente de IA (Antigravity, Codex ou outro assistente) assumindo o AcadChain, leia com atenção:
 
 ---
 
-## 1. Passo a Passo de Reconhecimento
-1. **Leia o estado atual:** Verifique `contextualizacao/05-estado-atual.md` para ver o que já foi finalizado.
-2. **Consulte o roadmap:** Veja em `contextualizacao/06-roadmap.md` qual é a próxima etapa a ser abordada (atualmente, a Etapa 2: Blockchain / Hardhat 3).
-3. **Verifique a saúde do código existente:**
-   - Execute no terminal: `npm run build:backend` e `npm run build:client`.
-   - Se houver falhas de tipagem ou compilação, priorize consertá-las antes de adicionar qualquer arquivo novo.
+## 1. Como Descobrir Rapidamente o Estado Atual
+1. **Leia `contextualizacao/05-estado-atual.md`:** A **Etapa 2** está 100% concluída e testada.
+2. **Veja o roadmap em `contextualizacao/06-roadmap.md`:** A próxima fase a ser abordada é a **Etapa 3** (Geração de PDFs, QR Codes e Leitor de Documentos).
+3. **Valide a integridade do código existente:**
+   - Execute no terminal: `npm run build` (deve compilar os 3 workspaces sem erro).
+   - Execute: `npm run test:blockchain` (12 testes do contrato devem passar).
+   - Execute: `npm run test:backend` (13 testes do backend devem passar).
 
 ---
 
-## 2. Regras de Não-Regressão
-- **Não apague a pasta `dados/` sem confirmação do usuário.** O banco SQLite contém dados de teste que podem ter sido atualizados durante demonstrações.
-- **Não reverta para bibliotecas de banco externas** (como `better-sqlite3`, `sequelize` ou `prisma`). O projeto utiliza o módulo nativo `node:sqlite` para garantir estabilidade e zero dependência de compiladores nativos.
-- **Sempre teste no Windows 11:** Os comandos shell executados devem ser compatíveis com PowerShell e CMD no Windows.
+## 2. Regras Rígidas de Desenvolvimento
+- **NÃO crie simulações falsas de blockchain:** O projeto utiliza o nó Ethereum local do Hardhat rodando transações reais via JSON-RPC.
+- **NÃO apague o banco `dados/acadchain.sqlite`** arbitrariamente.
+- **NÃO adicione ORMs pesados** (Prisma, TypeORM, Sequelize). O projeto utiliza o módulo nativo `node:sqlite` para garantir estabilidade e zero dependência de compiladores C++ no Windows.
+- **Mantenha os comandos compatíveis com Windows 11.**
 
 ---
 
-## 3. Como Finalizar a sua Sessão
-Antes de encerrar o turno, certifique-se de:
-1. Executar todos os testes e builds.
-2. Atualizar `contextualizacao/05-estado-atual.md` refletindo as conquistas do seu turno.
-3. Se você tomou uma nova decisão de arquitetura, adicione um registro em `contextualizacao/04-decisoes-tecnicas.md`.
+## 3. Estrutura dos Módulos
+- `/blockchain`: Smart Contract `AcademicCredentialRegistry.sol`, testes Hardhat e script de deploy.
+- `/backend`: API Express com Viem, `BlockchainService`, prepared statements SQLite e rotas REST.
+- `/client`: Frontend React + Vite + Tailwind com Laboratório Blockchain (5 cenários) e Explorador de Blocos.

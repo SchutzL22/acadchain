@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, GraduationCap, Award, FileText, Hash, Calendar, CheckCircle2 } from 'lucide-react';
+import { Users, GraduationCap, Award, Hash, Calendar } from 'lucide-react';
 import { Estudante } from '../types';
 import { fetchEstudantes } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';

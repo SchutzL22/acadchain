@@ -1,41 +1,41 @@
-# 02 - Arquitetura e Stack Tecnológica
+# 02 - Arquitetura e Stack Tecnológica (Atualizado Etapa 2)
 
-## 1. Visão Geral da Arquitetura
+## 1. Visão Geral da Arquitetura Integrada
 
-O sistema é dividido em quatro camadas bem delimitadas:
+O sistema é dividido em quatro camadas operacionais reais:
 
 ```
-[ Frontend: React + Vite + TS ]
+[ Frontend: React 18 + Vite + TS + Tailwind ]
               │  (HTTP / REST JSON)
               ▼
-[ Backend: Express + TypeScript ]
+[ Backend: Express + TypeScript + Viem ]
         │                   │
-        │ (node:sqlite)     │ (JSON-RPC na Etapa 2)
+        │ (node:sqlite)     │ (JSON-RPC http://127.0.0.1:8545)
         ▼                   ▼
-[ SQLite Local ]    [ Blockchain Local (Hardhat) ]
-  acadchain.sqlite     (Smart Contracts em Solidity)
+[ SQLite Local ]    [ Nó Ethereum Local (Hardhat 3) ]
+  acadchain.sqlite     AcademicCredentialRegistry.sol
 ```
 
-## 2. Tecnologias Adotadas e Motivações
+## 2. Tecnologias Adotadas
 
 ### Frontend (`/client`)
-- **React 18/19 com Vite:** Compilação ultra-rápida, Hot Module Replacement e ecossistema moderno.
-- **TypeScript:** Segurança de tipos compartilhada conceitualmente com a API.
-- **Tailwind CSS:** Produtividade estilística, visual sóbrio acadêmico e excelente responsividade.
-- **React Router:** Roteamento declarativo do lado do cliente.
-- **Lucide React:** Iconografia semântica, leve e consistente.
+- **React com Vite e TypeScript:** Roteamento com React Router, ícones Lucide React e Tailwind CSS.
+- Módulos interativos: Painel de Instituições, Painel Discente, Laboratório Blockchain (5 cenários) e Explorador de Blocos.
 
 ### Backend (`/backend`)
-- **Node.js (v24+ / v26 LTS):** Runtime moderno com suporte a módulos nativos e alta performance assíncrona.
-- **Express com TypeScript:** Servidor de API REST claro, modular, com middlewares centralizados.
-- **CORS:** Restrito à origem autorizada do frontend (`http://localhost:5173`).
-- **Dotenv:** Configuração orientada a ambientes via variáveis isoladas.
+- **Express com TypeScript e Viem:**
+  - `BlockchainService`: gerencia conexão com nó local, assinaturas com chaves de desenvolvimento e chamadas tipadas ao contrato.
+  - Endpoints REST para consulta de status, contrato, transações, emissão e revogação on-chain.
 
 ### Banco de Dados (`node:sqlite`)
-- Módulo nativo padrão do Node.js, dispensando compilações em C/C++ (`node-gyp`), dependências de drivers externos ou instalação de servidores de banco de dados pesados.
-- Consultas SQL cruas, parametrizadas para imunidade a SQL Injection.
-- Ativação obrigatória de `PRAGMA foreign_keys = ON;`.
+- Módulo nativo padrão do Node.js, com prepared statements e migrações não destrutivas em `backend/src/db/migrate.ts`.
+- Tabela `documentos` enriquecida com `tx_hash_blockchain`, `bloco_blockchain`, `status_sincronizacao`, e tabela `transacoes_blockchain`.
 
-### Blockchain (`/blockchain` - Planejado para Etapa 2)
-- Framework **Hardhat 3** rodando rede Ethereum local na porta 8545.
-- Linguagem **Solidity** para os contratos de registro e atestação.
+### Blockchain (`/blockchain`)
+- Framework **Hardhat 3** com Solidity **0.8.24**.
+- Contrato inteligente `AcademicCredentialRegistry.sol`:
+  - Controle de instituições autorizadas (`authorizeIssuer`, `deauthorizeIssuer`).
+  - Emissão imutável de provas (`issueCredential`).
+  - Verificação matemática (`verifyCredential`).
+  - Revogação auditável restrita ao emissor original (`revokeCredential`).
+  - Eventos: `CredentialIssued`, `CredentialRevoked`, `IssuerAuthorized`.

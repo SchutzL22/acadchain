@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, AlertCircle, CheckCircle, ShieldAlert, Hash, FileCode2, Info } from 'lucide-react';
+import { Search, CheckCircle, ShieldAlert, Hash, FileCode2, Info } from 'lucide-react';
 
 export const VerificacaoPublica: React.FC = () => {
   const [termoBusca, setTermoBusca] = useState('');

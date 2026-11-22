@@ -1,36 +1,39 @@
 # 05 - Estado Atual do Projeto
 
 **Data de Atualização:** 2026-11-22  
-**Fase Corrente:** Etapa 1 — Fundação Arquitetural, Banco Relacional e Interface Inicial
+**Fase Corrente:** Etapa 2 Concluída com Sucesso — Blockchain Hardhat Local e Smart Contracts Integrados
 
 ---
 
-## 1. O que foi Implementado e Verificado
-- [x] **Estrutura de Repositório Monorepo:** Configuração de workspaces (`backend`, `client`), scripts unificados e governança `AGENTS.md`.
-- [x] **Banco de Dados SQLite (`node:sqlite`):**
-  - Esquema com 6 tabelas (`instituicoes`, `estudantes`, `usuarios`, `matriculas`, `documentos`, `auditoria`).
-  - Chaves primárias, estrangeiras com `ON DELETE` e restrições `CHECK` implementadas.
-  - Índices para busca otimizada (`idx_estudantes_cpf`, `idx_documentos_hash`, etc.).
-  - Scripts SQL versionados em `ajudaainstalar/` e rotina idempotente em `scripts/`.
-  - Dados de teste com 3 instituições universitárias fictícias e 5 estudantes com matrículas e documentos.
-- [x] **Backend Express com TypeScript:**
-  - Configuração rigorosa de TypeScript e middleware centralizado de erros.
-  - Rotas ativas: `GET /api/health`, `GET /api/instituicoes`, `GET /api/estudantes`.
-  - Consultas com parâmetros vinculados (prepared statements) sem ORM intermediário.
-- [x] **Frontend React + Vite + Tailwind CSS:**
-  - Interface moderna com paleta acadêmica (azul marinho, cinzas e detalhes verdes).
-  - Páginas ativas: Início, Visão Geral, Instituições (consumindo API real), Estudantes (consumindo API real), Como Funciona e Verificação Pública (com sinalizadores claros de protótipo).
-- [x] **Scripts de Automação para Windows 11:**
-  - `instalar.bat`: Verificação e setup de ambiente.
-  - `iniciar.bat`: Subida dos servidores nas portas 3001 e 5173.
-  - `parar.bat`: Encerramento seguro focado nos processos do projeto.
-  - `resetar-demo.bat`: Limpeza e reinserção dos dados de exemplo com confirmação.
-- [x] **Documentação Acadêmica e de Contextualização:** 10 arquivos de contextualização para agentes e 6 artigos aprofundados em `documentacao/`.
+## 1. O que foi Implementado e Efetivamente Testado
+
+- [x] **Diagnóstico e Correção da Etapa 1:**
+  - Instalação completa das dependências em `node_modules` com npm workspaces.
+  - Compilação sem erros do TypeScript no backend (`tsc`) e frontend (`vite build`).
+  - Todos os testes da API REST original aprovados.
+- [x] **Smart Contracts e Ambiente Blockchain (Hardhat):**
+  - Contrato `AcademicCredentialRegistry.sol` desenvolvido e compilado em Solidity 0.8.24.
+  - 12 testes automatizados do Smart Contract executados e aprovados com 100% de sucesso no Hardhat.
+  - Script de deploy `blockchain/scripts/deploy.ts` implantando o contrato, autorizando UFS, ITB e PUI e emitindo 4 credenciais de demonstração on-chain.
+  - Geração automática do manifesto com ABI e endereços em `dados/contract-manifest.json`.
+- [x] **Integração com SQLite:**
+  - Migrações automáticas não destrutivas em `backend/src/db/migrate.ts`.
+  - Tabela `transacoes_blockchain` e campos de sincronização on-chain (`tx_hash_blockchain`, `bloco_blockchain`, `status_sincronizacao`).
+- [x] **Backend Express e Viem:**
+  - `BlockchainService` conectando ao JSON-RPC local (`http://127.0.0.1:8545`).
+  - Serialização canônica determinística (`canonicalizeAcademicData`).
+  - Rotas ativas e testadas: `/api/blockchain/status`, `/api/blockchain/contrato`, `/api/blockchain/transacoes`, `/api/credenciais`, `/api/credenciais/emitir`, `/api/credenciais/:id/verificar`, `/api/credenciais/:id/revogar`.
+  - 13 testes automatizados no backend aprovados.
+- [x] **Interface React Expandida:**
+  - Novo **Laboratório Blockchain** com os 5 cenários didáticos (Emissão, Verificação, Adulteração, Revogação, Ataque Hacker).
+  - Novo **Explorador AcadChain** com visualização em tempo real de blocos, transações, dados do contrato e didática acadêmica.
+  - Barra de navegação e página inicial atualizadas.
+- [x] **Scripts Operacionais Windows 11:**
+  - `instalar.bat`, `iniciar.bat`, `parar.bat` e `resetar-demo.bat` atualizados e funcionais.
 
 ---
 
-## 2. O que está Pendente para as Próximas Etapas
-- [ ] Implementação de contratos inteligentes Solidity no Hardhat (Etapa 2).
-- [ ] Geração de hashes SHA-256 e gravação na rede Ethereum local (Etapa 2).
-- [ ] Mecanismo interativo de verificação com QR Code e leitor de PDF (Etapa 3).
-- [ ] Simulação de tentativas de adulteração para comparação científica (Etapa 3).
+## 2. Próximos Passos (Etapa 3 do Roadmap)
+- [ ] Geração e leitura de QR Codes para verificação pública instantânea.
+- [ ] Integração com emissão de documentos PDF e assinatura visual de diplomas.
+- [ ] Módulo comparativo de latência e consumo de gas entre SQLite e Blockchain.

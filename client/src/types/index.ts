@@ -31,9 +31,25 @@ export interface DocumentoResumo {
   uuid_publico: string;
   tipo: 'DIPLOMA' | 'CERTIFICADO' | 'CARTEIRINHA';
   titulo: string;
+  descricao?: string;
   data_emissao: string;
   hash_sha256_conteudo: string;
   status: 'EMITIDO' | 'REVOGADO' | 'EXPIRADO';
+  tx_hash_blockchain?: string | null;
+  bloco_blockchain?: number | null;
+  smart_contract_address?: string | null;
+  status_sincronizacao?: 'NAO_SINCRONIZADO' | 'PENDENTE' | 'CONFIRMADO_ONCHAIN' | 'FALHA_ONCHAIN' | 'REVOGADO_ONCHAIN';
+  curso?: string;
+  nivel?: string;
+  numero_matricula?: string;
+  instituicao_id?: number;
+  instituicao_sigla?: string;
+  instituicao_nome?: string;
+  estudante_id?: number;
+  estudante_nome?: string;
+  estudante_cpf?: string;
+  revogado_em?: string | null;
+  motivo_revogacao?: string | null;
 }
 
 export interface Estudante {
@@ -45,6 +61,46 @@ export interface Estudante {
   criado_em: string;
   matriculas?: Matricula[];
   documentos?: DocumentoResumo[];
+}
+
+export interface BlockchainStatus {
+  online: boolean;
+  rpcUrl?: string;
+  chainId?: number;
+  blocoAtual?: number;
+  contratoImplantado?: boolean;
+  redeReiniciada?: boolean;
+  mensagem?: string;
+  contrato?: {
+    endereco: string;
+    deployer: string;
+    blocoDeploy: number;
+    dataDeploy: string;
+    totalEmitidas: number;
+    totalRevogadas: number;
+  };
+  instituicoesAutorizadas?: {
+    id: number;
+    sigla: string;
+    nome: string;
+    address: string;
+    role: string;
+  }[];
+  erro?: string;
+}
+
+export interface TransacaoBlockchain {
+  id: number;
+  tipo_operacao: 'DEPLOY' | 'AUTORIZAR_EMISSOR' | 'EMISSAO' | 'REVOGACAO';
+  tx_hash: string;
+  bloco: number;
+  de_endereco: string;
+  para_endereco: string;
+  status: 'PENDENTE' | 'CONFIRMADA' | 'FALHA';
+  detalhes: string;
+  criado_em: string;
+  uuid_publico?: string;
+  documento_titulo?: string;
 }
 
 export interface ApiResponse<T> {

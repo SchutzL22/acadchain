@@ -2,20 +2,37 @@
 
 > **Blockchain para Certificação Acadêmica Nacional:** Rede Descentralizada para Autenticação de Diplomas e Carteirinha Estudantil Digital.
 
-O **AcadChain** é um projeto e protótipo científico que investiga a aplicação de tecnologias de registro distribuído (blockchain Ethereum, contratos inteligentes e hashing criptográfico SHA-256) na verificação de autenticidade, integridade e rastreabilidade de documentos educacionais no Brasil.
+O **AcadChain** é um projeto e protótipo acadêmico e científico que investiga a aplicação de tecnologias de registro distribuído (blockchain Ethereum via Hardhat local, contratos inteligentes Solidity e hashing criptográfico SHA-256) na garantia de autenticidade, integridade e rastreabilidade de documentos educacionais no Brasil.
 
 ---
 
-## 📌 Status Atual: Etapa 1 Concluída
+## 📌 Status Atual: Etapa 2 Concluída
 
-- [x] Estrutura Monorepo com npm workspaces (`client`, `backend`, `blockchain`, `dados`).
-- [x] Banco de dados local SQLite com suporte nativo (`node:sqlite`), chaves estrangeiras ativas e integridade referencial.
-- [x] Backend Express com TypeScript, rotas de consulta (`/api/health`, `/api/instituicoes`, `/api/estudantes`), validação e tratamento centralizado de erros.
-- [x] Frontend React + Vite + TypeScript + Tailwind CSS, responsivo, acessível e conectado à API real.
-- [x] Scripts operacionais em lote para Windows 11 (`instalar.bat`, `iniciar.bat`, `parar.bat`, `resetar-demo.bat`).
-- [x] Sistema de contextualização para agentes de IA em `contextualizacao/` e instruções em `AGENTS.md`.
-- [x] Documentação técnica e acadêmica aprofundada em `documentacao/`.
-- [ ] Etapa 2 (Prevista): Hardhat 3, Solidity, rede local Ethereum e contratos inteligentes de registro.
+- [x] **Monorepo com npm workspaces:** Módulos integrados `backend`, `client` e `blockchain`.
+- [x] **Smart Contracts Solidity (Hardhat):**
+  - Contrato `AcademicCredentialRegistry.sol` em Solidity 0.8.24.
+  - Registro e governança de instituições autorizadas (`authorizeIssuer`, `deauthorizeIssuer`).
+  - Emissão com transações reais e bloqueio de identificadores duplicados (`issueCredential`).
+  - Validação matemática de integridade (`verifyCredential`).
+  - Revogação auditável restrita ao emissor original (`revokeCredential`).
+  - 12 testes automatizados no Hardhat aprovados com 100% de sucesso.
+- [x] **Backend Express com Viem e SQLite:**
+  - `BlockchainService` integrado ao nó local (`http://127.0.0.1:8545`).
+  - Canonicalização determinística de dados acadêmicos baseada na RFC 8785.
+  - Banco de dados local SQLite via módulo nativo `node:sqlite`.
+  - 13 testes automatizados no backend aprovados.
+- [x] **Frontend React + Vite + Tailwind:**
+  - **Laboratório Blockchain:** Interface com 5 cenários práticos (Emissão, Verificação, Adulteração controlada com efeito avalanche, Revogação on-chain e Bloqueio de invasores).
+  - **Explorador AcadChain:** Visualização em tempo real de blocos minerados, transações, contratos e didática conceitual.
+  - Painéis de Instituições e Estudantes com dados reais.
+- [x] **Scripts de Automação para Windows 11:**
+  - `instalar.bat`: Configuração e compilação completa do ambiente.
+  - `iniciar.bat`: Subida coordenada do nó Hardhat, deploy automático, backend e frontend.
+  - `parar.bat`: Encerramento seguro focado estritamente nas portas do projeto (8545, 3001, 5173).
+  - `resetar-demo.bat`: Restauração dos dados demonstrativos com confirmação do usuário.
+- [x] **Documentação e Protocolo Científico:**
+  - `documentacao/experimento-cientifico.md`: Metodologia, hipóteses, procedimentos e métricas de gas/tempo.
+  - Sistema de contextualização para agentes de IA em `contextualizacao/` e diretrizes em `AGENTS.md`.
 
 ---
 
@@ -30,54 +47,48 @@ O **AcadChain** é um projeto e protótipo científico que investiga a aplicaç�
 ## 🚀 Como Executar no Windows 11
 
 ### Pré-requisitos
-- **Windows 11**
-- **Node.js 24+ LTS** (testado com Node v26)
-- **Git**
+- **Windows 11** de 64 bits.
+- **Node.js 24+ LTS** (testado com Node v26).
+- **Git** instalado.
 
-### Instalação Rápida
-1. Execute o script de instalação para checar requisitos, instalar dependências e inicializar o banco de dados:
-   ```cmd
-   instalar.bat
-   ```
-2. Inicie a aplicação (Backend na porta `3001` e Frontend na porta `5173`):
-   ```cmd
-   iniciar.bat
-   ```
-3. Acesse a aplicação no seu navegador:
-   - Frontend: [http://localhost:5173](http://localhost:5173)
-   - API Backend: [http://localhost:3001/api/health](http://localhost:3001/api/health)
+### 1. Instalação
+Abra o prompt de comando (CMD) ou PowerShell na raiz da pasta e execute:
+```cmd
+instalar.bat
+```
 
-4. Para parar os servidores em execução:
-   ```cmd
-   parar.bat
-   ```
+### 2. Inicialização
+Para iniciar o nó Ethereum Hardhat, realizar o deploy dos contratos e subir o backend e frontend:
+```cmd
+iniciar.bat
+```
+Após a inicialização, acesse no seu navegador:
+- **Interface Geral:** [http://localhost:5173](http://localhost:5173)
+- **Laboratório Blockchain (5 Cenários):** [http://localhost:5173/laboratorio](http://localhost:5173/laboratorio)
+- **Explorador de Blocos:** [http://localhost:5173/explorador](http://localhost:5173/explorador)
+- **Backend API REST:** [http://localhost:3001/api/health](http://localhost:3001/api/health)
+- **Nó Ethereum Local:** [http://127.0.0.1:8545](http://127.0.0.1:8545)
 
-5. Para restaurar o banco de dados e os dados de exemplo a qualquer momento:
-   ```cmd
-   resetar-demo.bat
-   ```
+### 3. Encerramento Seguro
+Para parar todos os servidores do projeto sem fechar outros processos do seu computador:
+```cmd
+parar.bat
+```
+
+### 4. Restauração de Demonstração
+Para recriar a base SQLite e restabelecer os dados originais:
+```cmd
+resetar-demo.bat
+```
 
 ---
 
-## 📂 Estrutura do Repositório
+## 🧪 Roteiro de Demonstração para Avaliadores (Banca/Professor)
 
-```text
-/
-├── client/              # Interface do Usuário (React, Vite, TypeScript, Tailwind)
-├── backend/             # Servidor de API REST (Node.js, Express, TypeScript, node:sqlite)
-├── blockchain/          # Arquitetura Hardhat/Solidity (planejado para Etapa 2)
-├── contextualizacao/    # Diretrizes e estado persistente para agentes de IA
-├── documentacao/        # Artigos, fundamentos científicos e roteiro de demonstração
-├── ajudaainstalar/      # Scripts SQL e manuais de instalação e troubleshooting
-├── referencias/         # Bibliografia acadêmica (Nakamoto, Buterin, W3C)
-├── dados/               # Diretório do banco de dados local SQLite (ignorado no Git)
-├── scripts/             # Scripts Node para inicialização, população e reset
-├── AGENTS.md            # Guia de governança para assistentes de programação
-├── README.md            # Documento principal
-├── .env.example         # Modelo de variáveis de ambiente
-├── package.json         # Workspace raiz
-├── instalar.bat         # Script de instalação Windows
-├── iniciar.bat          # Script de inicialização dos servidores Windows
-├── parar.bat            # Script de parada segura dos processos Windows
-└── resetar-demo.bat     # Script de restauração de dados demonstrativos
-```
+1. Execute `iniciar.bat` e abra [http://localhost:5173/laboratorio](http://localhost:5173/laboratorio).
+2. **Cenário A (Emissão):** Selecione a *Universidade Federal do Saber (UFS)* e emita uma credencial para um formando. Observe o hash da transação e o número do bloco minerado em tempo real.
+3. **Cenário B (Verificação):** Clique na aba de verificação e consulte o documento emitido. O Smart Contract confirmará matematicamente a autenticidade on-chain.
+4. **Cenário C (Adulteração):** Selecione o cenário de adulteração e modifique o curso de "Sistemas de Informação" para "Medicina". Observe a detecção imediata de fraude pelo recálculo do SHA-256 (efeito avalanche).
+5. **Cenário D (Revogação):** Revogue uma credencial formalmente e comprove que o contrato altera o status para `REVOKED` preservando a data e o motivo.
+6. **Cenário E (Ataque Não Autorizado):** Tente emitir um certificado utilizando a Conta Invasora (#9). Demonstre que a regra Solidity `onlyAuthorizedIssuer` reverte a transação e protege o consórcio.
+7. Acesse [http://localhost:5173/explorador](http://localhost:5173/explorador) para visualizar o histórico de blocos e transações gerados durante a demonstração.
